@@ -150,7 +150,7 @@ def colored_scatter_chart(
         rx.foreach(
             data.keys(),
             lambda i: rx.recharts.scatter(
-                name=f"Cluster {i}",
+                name=f"Customer {i}",
                 data=data[i],
                 fill=color_map[i.to(int) % len(CLUSTER_COLORS)],
             ),
@@ -170,7 +170,7 @@ def radar_chart(data: rx.Var[list[dict]]) -> rx.Component:
         rx.foreach(
             AppState.cluster_profiles,
             lambda profile, i: rx.recharts.radar(
-                name=f"Cluster {profile['cluster_id']}",
+                name=f"Customer {profile['cluster_id']}",
                 data_key=f"c{profile['cluster_id']}",
                 stroke=cluster_colors_var[i % len(cluster_colors_var)],
                 fill=cluster_colors_var[i % len(cluster_colors_var)],

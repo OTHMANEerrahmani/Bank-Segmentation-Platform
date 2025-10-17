@@ -50,6 +50,10 @@ class AppState(rx.State):
     cluster_comparison_data: list[dict[str, str | int | float]] = []
 
     @rx.var
+    def total_customers_in_profiles(self) -> int:
+        return sum((p["size"] for p in self.cluster_profiles))
+
+    @rx.var
     def filtered_cluster_profiles(self) -> list[dict[str, str | int | float]]:
         """Return cluster profiles based on the selected filter."""
         if self.selected_cluster_filter == -1:

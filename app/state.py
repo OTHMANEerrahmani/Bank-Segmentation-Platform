@@ -9,9 +9,12 @@ from app.utils.pca_utils import perform_pca
 from app.utils.clustering_utils import (
     compute_elbow_data,
     perform_clustering,
+    perform_hierarchical_clustering,
+    compute_dendrogram_data,
     generate_cluster_profiles,
 )
 from app.utils.insights_utils import generate_marketing_insights
+from sklearn.metrics import silhouette_score, adjusted_rand_score
 
 
 class AppState(rx.State):
@@ -23,6 +26,8 @@ class AppState(rx.State):
     cleaned_data_columns: list[str] = []
     pca_data: list[dict[str, str | int | float]] = []
     clustered_data: list[dict[str, str | int | float]] = []
+    hierarchical_clustered_data: list[dict[str, str | int | float]] = []
+    dendrogram_data: dict = {}
     profiles: list[dict[str, str | int | float]] = []
     insights_data: list[dict[str, str | int | float | list[dict[str, str]]]] = []
     distribution_pie_data: list[dict[str, str | int | float]] = []
@@ -45,9 +50,19 @@ class AppState(rx.State):
     pca_components_data: list[dict[str, str | float]] = []
     elbow_data: list[dict[str, float]] = []
     cluster_scatter_data: dict[int, list[dict[str, str | int | float]]] = {}
+    hierarchical_cluster_scatter_data: dict[int, list[dict[str, str | int | float]]] = {}
     cluster_profiles: list[dict[str, str | int | float]] = []
     selected_cluster_filter: int = -1
     cluster_comparison_data: list[dict[str, str | int | float]] = []
+    kmeans_labels: list[int] = []
+    hierarchical_labels: list[int] = []
+
+    def set_num_clusters(self, value: str):
+        """Set the number of clusters from string input."""
+        try:
+            self.num_clusters = int(value)
+        except ValueError:
+            self.num_clusters = 3
 
     @rx.var
     def total_customers_in_profiles(self) -> int:
@@ -207,12 +222,26 @@ class AppState(rx.State):
             clustered_df = pca_df.copy()
             clustered_df["cluster"] = clusters
             self.clustered_data = clustered_df.to_dict("records")
+            self.kmeans_labels = [int(c) for c in clusters.tolist() if hasattr(clusters, 'tolist')] if hasattr(clusters, 'tolist') else [int(x) for x in clusters]
             scatter_data_by_cluster = {}
             for i in range(self.num_clusters):
                 cluster_data = clustered_df[clustered_df["cluster"] == i]
                 scatter_data_by_cluster[i] = cluster_data.to_dict("records")
             self.cluster_scatter_data = scatter_data_by_cluster
             self.cluster_profiles = generate_cluster_profiles(original_df, clusters)
+            # Update comparison metrics if hierarchical labels exist
+            try:
+                if self.hierarchical_labels:
+                    km_sil = float(silhouette_score(pca_df, self.kmeans_labels))
+                    hc_sil = float(silhouette_score(pca_df, self.hierarchical_labels))
+                    ari = float(adjusted_rand_score(self.kmeans_labels, self.hierarchical_labels))
+                    self.cluster_comparison_data = [
+                        {"algorithm": "KMeans", "k": self.num_clusters, "silhouette": km_sil},
+                        {"algorithm": "Hierarchical", "k": self.num_clusters, "silhouette": hc_sil},
+                        {"metric": "Adjusted Rand Index", "value": ari},
+                    ]
+            except Exception:
+                pass
             self.current_stage = "Clustered"
             yield rx.toast.success(f"Clustering complete with {k} clusters.")
             yield rx.redirect("/clustering")
@@ -220,6 +249,49 @@ class AppState(rx.State):
             logging.exception(f"Clustering failed: {e}")
             self.current_stage = "Clustering Failed"
             yield rx.toast.error(f"Clustering failed: {e}")
+
+    @rx.event
+    def run_hierarchical_clustering(self):
+        if not self.pca_data:
+            yield rx.toast.error("No PCA data available for clustering.")
+            return
+        self.current_stage = "Hierarchical Clustering..."
+        yield
+        try:
+            pca_df = pd.DataFrame(self.pca_data)
+            clusters = perform_hierarchical_clustering(pca_df, int(self.num_clusters))
+            clustered_df = pca_df.copy()
+            clustered_df["cluster"] = clusters
+            self.hierarchical_clustered_data = clustered_df.to_dict("records")
+            self.hierarchical_labels = [int(c) for c in clusters.tolist() if hasattr(clusters, 'tolist')] if hasattr(clusters, 'tolist') else [int(x) for x in clusters]
+            scatter_data_by_cluster = {}
+            for i in range(int(self.num_clusters)):
+                cluster_data = clustered_df[clustered_df["cluster"] == i]
+                scatter_data_by_cluster[i] = cluster_data.to_dict("records")
+            self.hierarchical_cluster_scatter_data = scatter_data_by_cluster
+            
+            # Compute dendrogram data
+            self.dendrogram_data = compute_dendrogram_data(pca_df)
+            # Compute comparison metrics if KMeans already run
+            try:
+                if self.kmeans_labels:
+                    km_sil = float(silhouette_score(pca_df, self.kmeans_labels))
+                    hc_sil = float(silhouette_score(pca_df, self.hierarchical_labels))
+                    ari = float(adjusted_rand_score(self.kmeans_labels, self.hierarchical_labels))
+                    self.cluster_comparison_data = [
+                        {"algorithm": "KMeans", "k": int(self.num_clusters), "silhouette": km_sil},
+                        {"algorithm": "Hierarchical", "k": int(self.num_clusters), "silhouette": hc_sil},
+                        {"metric": "Adjusted Rand Index", "value": ari},
+                    ]
+            except Exception:
+                pass
+            self.current_stage = "Hierarchical Complete"
+            yield rx.toast.success("Hierarchical clustering complete.")
+            yield rx.redirect("/clustering")
+        except Exception as e:
+            logging.exception(f"Hierarchical clustering failed: {e}")
+            self.current_stage = "Hierarchical Failed"
+            yield rx.toast.error(f"Hierarchical clustering failed: {e}")
 
     @rx.event
     def generate_profiles(self):

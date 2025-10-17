@@ -1,6 +1,6 @@
 import reflex as rx
 from app.state import AppState
-from app.components.charts import elbow_chart, colored_scatter_chart
+from app.components.charts import elbow_chart, colored_scatter_chart, dendrogram_chart
 from app.components.card import metric_card
 
 
@@ -54,18 +54,62 @@ def cluster_selection_card() -> rx.Component:
         ),
         class_name="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8",
     )
+def hierarchical_clustering_card() -> rx.Component:
+    return rx.el.div(
+        rx.el.h3(
+            "2. Hierarchical Clustering",
+            class_name="text-xl font-semibold text-gray-800 mb-4",
+        ),
+        rx.el.div(
+            rx.el.button(
+                "Run Hierarchical Clustering",
+                on_click=AppState.run_hierarchical_clustering,
+                is_loading=AppState.current_stage == "Hierarchical Clustering...",
+                class_name="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors",
+            ),
+            class_name="flex justify-end mt-4",
+        ),
+        rx.cond(
+            AppState.dendrogram_data,
+            rx.el.div(
+                rx.el.h4(
+                    "Dendrogram",
+                    class_name="text-lg font-semibold text-gray-800 mb-4",
+                ),
+                dendrogram_chart(),
+                class_name="mt-6",
+            ),
+            rx.el.div(),
+        ),
+        class_name="bg-white p-6 rounded-xl shadow-sm border border-gray-200",
+    )
+
 
 
 def clustering_results() -> rx.Component:
     return rx.cond(
-        AppState.clustered_data.length() > 0,
+        (AppState.clustered_data.length() > 0) | (AppState.hierarchical_clustered_data.length() > 0),
         rx.el.div(
             rx.el.h3(
-                "2. Clustering Results",
+                "3. Clustering Results",
                 class_name="text-xl font-semibold text-gray-800 mb-4",
             ),
-            colored_scatter_chart(
-                data=AppState.cluster_scatter_data, num_clusters=AppState.num_clusters
+            rx.el.div(
+                rx.el.div(
+                    rx.el.h4("K-Means", class_name="font-semibold mb-2"),
+                    colored_scatter_chart(
+                        data=AppState.cluster_scatter_data, num_clusters=AppState.num_clusters
+                    ),
+                    class_name="bg-gray-50 p-4 rounded-lg border border-gray-100",
+                ),
+                rx.el.div(
+                    rx.el.h4("Hierarchical", class_name="font-semibold mb-2"),
+                    colored_scatter_chart(
+                        data=AppState.hierarchical_cluster_scatter_data, num_clusters=AppState.num_clusters
+                    ),
+                    class_name="bg-gray-50 p-4 rounded-lg border border-gray-100",
+                ),
+                class_name="grid grid-cols-1 lg:grid-cols-2 gap-6",
             ),
             rx.el.div(
                 rx.el.button(
@@ -74,6 +118,41 @@ def clustering_results() -> rx.Component:
                     class_name="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors",
                 ),
                 class_name="flex justify-end mt-4",
+            ),
+            class_name="bg-white p-6 rounded-xl shadow-sm border border-gray-200",
+        ),
+        rx.el.div(),
+    )
+
+
+def comparison_section() -> rx.Component:
+    return rx.cond(
+        AppState.cluster_comparison_data.length() > 0,
+        rx.el.div(
+            rx.el.h3(
+                "4. Algorithm Comparison",
+                class_name="text-xl font-semibold text-gray-800 mb-4",
+            ),
+            rx.el.div(
+                rx.foreach(
+                    AppState.cluster_comparison_data,
+                    lambda row: rx.el.div(
+                        rx.el.div(
+                            rx.el.span(row.get("algorithm", row.get("metric", "")), class_name="font-medium text-gray-800"),
+                            rx.el.span(
+                                rx.cond(
+                                    row.get("silhouette") != None,
+                                    rx.el.span(f"Silhouette: {row['silhouette']}"),
+                                    rx.el.span(f"ARI: {row['value']}")
+                                ),
+                                class_name="text-gray-600"
+                            ),
+                            class_name="flex items-center justify-between"
+                        ),
+                        class_name="px-4 py-2 bg-gray-50 rounded border border-gray-100"
+                    ),
+                ),
+                class_name="space-y-2",
             ),
             class_name="bg-white p-6 rounded-xl shadow-sm border border-gray-200",
         ),
@@ -93,7 +172,11 @@ def clustering_page() -> rx.Component:
         rx.cond(
             AppState.pca_data.length() > 0,
             rx.el.div(
-                cluster_selection_card(), clustering_results(), class_name="space-y-8"
+                cluster_selection_card(),
+                hierarchical_clustering_card(),
+                clustering_results(),
+                comparison_section(),
+                class_name="space-y-8"
             ),
             rx.el.div(
                 rx.icon("git-branch", class_name="w-12 h-12 text-gray-400 mb-4"),

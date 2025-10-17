@@ -1,8 +1,44 @@
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import silhouette_score
+from scipy.cluster.hierarchy import dendrogram, linkage
 from typing import Any
+
+def perform_hierarchical_clustering(pca_df: pd.DataFrame, k: int) -> np.ndarray:
+    """Runs hierarchical clustering with a specified number of clusters."""
+    hierarchical = AgglomerativeClustering(n_clusters=int(k), linkage="ward")
+    clusters = hierarchical.fit_predict(pca_df)
+    return clusters
+
+
+def compute_dendrogram_data(pca_df: pd.DataFrame) -> dict:
+    """Computes linkage matrix and dendrogram data for hierarchical clustering."""
+    # Use a sample of data for dendrogram to avoid performance issues
+    sample_size = min(100, len(pca_df))
+    if len(pca_df) > sample_size:
+        sample_indices = np.random.choice(len(pca_df), sample_size, replace=False)
+        sample_data = pca_df.iloc[sample_indices]
+    else:
+        sample_data = pca_df
+    
+    # Compute linkage matrix
+    linkage_matrix = linkage(sample_data, method='ward')
+    
+    # Compute dendrogram data
+    dendro_data = dendrogram(linkage_matrix, no_plot=True)
+    
+    return {
+        "linkage_matrix": linkage_matrix.tolist(),
+        "dendro_data": {
+            "leaves": dendro_data['leaves'],
+            "ivl": dendro_data['ivl'],
+            "color_list": dendro_data['color_list'],
+            "dcoord": dendro_data['dcoord'],
+            "icoord": dendro_data['icoord']
+        }
+    }
 
 
 def compute_elbow_data(pca_df: pd.DataFrame) -> list[dict[str, str | int | float]]:
@@ -60,7 +96,7 @@ def generate_cluster_profiles(
         )
     profiled_df["cluster"] = clusters
     column_mappings = {
-        "income": ["Monthly Income (€)", "Monthly Income", "Income", "monthly_income"],
+        "income": ["Monthly Income (€)", "Monthly Income", "Income", "monthly_income" ],
         "savings": [
             "Savings Amount (€)",
             "Savings Amount",

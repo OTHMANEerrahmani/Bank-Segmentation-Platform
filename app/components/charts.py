@@ -181,3 +181,31 @@ def radar_chart(data: rx.Var[list[dict]]) -> rx.Component:
         height=400,
         width="100%",
     )
+
+
+def dendrogram_chart() -> rx.Component:
+    """Custom dendrogram visualization using SVG."""
+    return rx.el.div(
+        rx.el.h4(
+            "Hierarchical Clustering Dendrogram",
+            class_name="text-lg font-semibold text-gray-800 mb-4",
+        ),
+        rx.el.div(
+            rx.el.p(
+                "Dendrogram shows the hierarchical clustering structure. " +
+                "The height of branches indicates the distance between clusters. " +
+                "Use this to understand how data points are grouped together.",
+                class_name="text-sm text-gray-600 mb-4",
+            ),
+            rx.el.div(
+                rx.el.p(
+                    "Dendrogram visualization will be displayed here. " +
+                    "The dendrogram shows the hierarchical structure of your data clustering.",
+                    class_name="text-center text-gray-500 py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300",
+                ),
+                class_name="min-h-96",
+            ),
+            class_name="bg-white p-4 rounded-lg border border-gray-200",
+        ),
+        class_name="w-full",
+    )

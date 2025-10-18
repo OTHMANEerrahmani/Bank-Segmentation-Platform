@@ -62,7 +62,51 @@ class AppState(rx.State):
         try:
             self.num_clusters = int(value)
         except ValueError:
-            self.num_clusters = 3
+            self.num_clusters = 4
+
+    @rx.event
+    def reset_application(self):
+        """Reset the entire application state to allow loading a new file."""
+        # Reset all data
+        self.raw_data = []
+        self.raw_data_columns = []
+        self.cleaned_data = []
+        self.cleaned_data_columns = []
+        self.pca_data = []
+        self.clustered_data = []
+        self.hierarchical_clustered_data = []
+        self.dendrogram_data = {}
+        self.profiles = []
+        self.insights_data = []
+        self.distribution_pie_data = []
+        self.kpi_summary = {}
+        self.selected_insight_cluster = -1
+        self.cleaning_log = []
+        self.uploaded_files = []
+        self.is_uploading = False
+        self.cleaning_summary = {
+            "total_rows": 0,
+            "missing_values": 0,
+            "outliers_detected": 0,
+            "duplicates_removed": 0,
+        }
+        self.pca_results = {}
+        self.pca_variance_data = []
+        self.pca_scatter_data = []
+        self.pca_components_data = []
+        self.elbow_data = []
+        self.cluster_scatter_data = {}
+        self.hierarchical_cluster_scatter_data = {}
+        self.cluster_profiles = []
+        self.selected_cluster_filter = -1
+        self.cluster_comparison_data = []
+        self.kmeans_labels = []
+        self.hierarchical_labels = []
+        
+        # Reset stage and redirect to home
+        self.current_stage = "Upload"
+        yield rx.toast.success("Application reset successfully. You can now upload a new file.")
+        yield rx.redirect("/")
 
     @rx.var
     def total_customers_in_profiles(self) -> int:
@@ -314,7 +358,7 @@ class AppState(rx.State):
         self.current_stage = "Generating Insights..."
         yield
         try:
-            self.insights_data = generate_marketing_insights(self.cluster_profiles)
+            self.insights_data = generate_marketing_insights(self.cluster_profiles) # type: ignore
             total_customers = sum((p["size"] for p in self.cluster_profiles))
             self.distribution_pie_data = [
                 {

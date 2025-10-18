@@ -4,20 +4,20 @@ from typing import Any
 
 def create_segment_name(profile: dict[str, str | int | float]) -> str:
     """Generates a descriptive name for a customer segment."""
-    income = profile["avg_income"]
-    savings = profile["avg_savings"]
-    spending = profile["avg_spending"]
-    age = profile["avg_age"]
-    seniority = profile["avg_seniority"]
+    income = float(profile["avg_income"])
+    savings = float(profile["avg_savings"])
+    spend = float(profile["avg_spend"])
+    age = float(profile["avg_age"])
+    seniority = float(profile["avg_seniority"])
     if income > 4000 and savings > 20000:
         return "Premium Savers"
-    if spending > 1000 and savings < 5000:
+    if spend > 1000 and savings < 5000:
         return "Active Spenders"
     if age < 35 and seniority < 5:
         return "Young Professionals"
     if age > 55 and seniority > 15:
         return "Loyal Veterans"
-    if income < 2500 and profile["avg_credit"] > 7000:
+    if income < 2500 and float(profile["avg_credit"]) > 7000:
         return "Credit Dependent"
     if income > 3500:
         return "High-Income Earners"
@@ -31,17 +31,17 @@ def generate_kpis(profile: dict[str, str | int | float]) -> list[dict[str, str]]
     kpis = [
         {
             "name": "Avg. Income",
-            "value": f"€{profile['avg_income']:.0f}",
+            "value": f"€{profile['avg_income']}",
             "icon": "wallet",
         },
         {
             "name": "Avg. Savings",
-            "value": f"€{profile['avg_savings']:.0f}",
+            "value": f"€{profile['avg_savings']}",
             "icon": "piggy-bank",
         },
         {
-            "name": "Avg. Spending",
-            "value": f"€{profile['avg_spending']:.0f}",
+            "name": "Avg. Spend",
+            "value": f"€{profile['avg_spend']}",
             "icon": "shopping-cart",
         },
     ]

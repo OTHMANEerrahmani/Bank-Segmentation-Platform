@@ -56,7 +56,7 @@ def profile_filters() -> rx.Component:
                     "flex items-center w-full text-left p-4 rounded-xl transition-all duration-300 transform shadow-lg bg-gray-100 border-2 border-gray-400",
                     "flex items-center w-full text-left p-4 rounded-xl transition-all duration-300 bg-white border-2 border-gray-200 shadow-sm hover:shadow-md",
                 ),
-                style={"min_height": "70px"},
+                style={"min_height": "40px"},
             ),
             rx.foreach(AppState.cluster_profiles, filter_button),
             class_name="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6",

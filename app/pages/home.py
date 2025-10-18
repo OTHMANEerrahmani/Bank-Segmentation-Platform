@@ -66,10 +66,18 @@ def home_page() -> rx.Component:
                                 ),
                                 class_name="flex-1",
                             ),
-                            rx.el.button(
-                                "Start Cleaning",
-                                on_click=AppState.run_cleaning,
-                                class_name="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors",
+                            rx.el.div(
+                                rx.el.button(
+                                    "Load New File",
+                                    on_click=AppState.reset_application,
+                                    class_name="px-3 py-2 bg-gray-600 text-white font-medium rounded-lg shadow-sm hover:bg-gray-700 transition-colors text-sm mr-2",
+                                ),
+                                rx.el.button(
+                                    "Start Cleaning",
+                                    on_click=AppState.run_cleaning,
+                                    class_name="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors",
+                                ),
+                                class_name="flex items-center gap-2",
                             ),
                             class_name="flex items-center gap-4 w-full p-4 bg-green-50 border border-green-200 rounded-xl mb-4",
                         ),

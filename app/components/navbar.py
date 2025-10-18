@@ -13,6 +13,15 @@ def navbar() -> rx.Component:
                     AppState.current_stage,
                     class_name="px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-100 rounded-md",
                 ),
+                rx.cond(
+                    AppState.raw_data.length() > 0,
+                    rx.el.button(
+                        "Load New File",
+                        on_click=AppState.reset_application,
+                        class_name="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors ml-4",
+                    ),
+                    rx.el.div(),
+                ),
                 class_name="flex items-center gap-2",
             ),
             class_name="flex items-center justify-between w-full",

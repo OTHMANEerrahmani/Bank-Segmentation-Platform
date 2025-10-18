@@ -96,8 +96,8 @@ def cluster_profile_card(profile: rx.Var[dict[str, str | int | float]]) -> rx.Co
             ),
             profile_metric(
                 "shopping-cart",
-                "Avg. Spending",
-                profile["avg_spending"],
+                "Avg. Spend",
+                profile["avg_spend"],
                 "€",
                 color=text_color,
             ),

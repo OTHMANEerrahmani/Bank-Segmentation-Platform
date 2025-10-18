@@ -16,7 +16,7 @@ def perform_hierarchical_clustering(pca_df: pd.DataFrame, k: int) -> np.ndarray:
 def compute_dendrogram_data(pca_df: pd.DataFrame) -> dict:
     """Computes linkage matrix and dendrogram data for hierarchical clustering."""
     # Use a sample of data for dendrogram to avoid performance issues
-    sample_size = min(100, len(pca_df))
+    sample_size = min(50, len(pca_df))  # Reduced for better visualization
     if len(pca_df) > sample_size:
         sample_indices = np.random.choice(len(pca_df), sample_size, replace=False)
         sample_data = pca_df.iloc[sample_indices]
@@ -27,7 +27,14 @@ def compute_dendrogram_data(pca_df: pd.DataFrame) -> dict:
     linkage_matrix = linkage(sample_data, method='ward')
     
     # Compute dendrogram data
-    dendro_data = dendrogram(linkage_matrix, no_plot=True)
+    dendro_data = dendrogram(linkage_matrix, no_plot=True, count_sort=True)
+    
+    # Create simplified visualization data
+    n_leaves = len(dendro_data['leaves'])
+    max_distance = max(dendro_data['dcoord'][0]) if dendro_data['dcoord'] else 1
+    
+    # Create tree structure for visualization
+    tree_structure = create_tree_structure(linkage_matrix, n_leaves)
     
     return {
         "linkage_matrix": linkage_matrix.tolist(),
@@ -37,8 +44,30 @@ def compute_dendrogram_data(pca_df: pd.DataFrame) -> dict:
             "color_list": dendro_data['color_list'],
             "dcoord": dendro_data['dcoord'],
             "icoord": dendro_data['icoord']
-        }
+        },
+        "tree_structure": tree_structure,
+        "n_leaves": n_leaves,
+        "max_distance": float(max_distance)
     }
+
+
+def create_tree_structure(linkage_matrix, n_leaves):
+    """Create a simplified tree structure for visualization."""
+    tree = []
+    node_id = n_leaves
+    
+    for i, (left, right, distance, count) in enumerate(linkage_matrix):
+        tree.append({
+            "id": int(node_id),
+            "left": int(left),
+            "right": int(right),
+            "distance": float(distance),
+            "count": int(count),
+            "level": i
+        })
+        node_id += 1
+    
+    return tree
 
 
 def compute_elbow_data(pca_df: pd.DataFrame) -> list[dict[str, str | int | float]]:
@@ -140,12 +169,12 @@ def generate_cluster_profiles(
         profile = {
             "cluster_id": int(cluster_id),
             "size": int(len(cluster_subset)),
-            "avg_income": float(cluster_subset[income_col].mean()),
-            "avg_savings": float(cluster_subset[savings_col].mean()),
-            "avg_credit": float(cluster_subset[credit_col].mean()),
-            "avg_spending": float(cluster_subset[spending_col].mean()),
-            "avg_age": float(cluster_subset[age_col].mean()),
-            "avg_seniority": float(cluster_subset[seniority_col].mean()),
+            "avg_income": f"{float(cluster_subset[income_col].mean()):.2f}",
+            "avg_savings": f"{float(cluster_subset[savings_col].mean()):.2f}",
+            "avg_credit": f"{float(cluster_subset[credit_col].mean()):.2f}",
+            "avg_spend": f"{float(cluster_subset[spending_col].mean()):.2f}",
+            "avg_age": f"{float(cluster_subset[age_col].mean()):.0f}",
+            "avg_seniority": f"{float(cluster_subset[seniority_col].mean()):.0f}",
         }
         profile_data.append(profile)
     return profile_data

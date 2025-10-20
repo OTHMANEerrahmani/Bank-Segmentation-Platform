@@ -1,3 +1,6 @@
+""" doc """
+from __future__ import annotations
+
 import reflex as rx
 from typing import Union
 
@@ -10,6 +13,7 @@ def metric_card(
         rx.el.div(
             rx.icon(icon, class_name=f"w-8 h-8 {color}"),
             class_name="p-3 bg-gray-100 rounded-lg",
+
         ),
         rx.el.div(
             rx.el.p(title, class_name="text-sm font-medium text-gray-500"),

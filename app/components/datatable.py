@@ -39,6 +39,8 @@ def data_table(data: rx.Var[list[dict]], columns: rx.Var[list[str]]) -> rx.Compo
                             "No data available.",
                             col_span=columns.length(),
                             class_name="text-center py-10 text-gray-500",
+                            colspan=columns.length(),
+                            row_span=1,
                         )
                     ),
                 )
